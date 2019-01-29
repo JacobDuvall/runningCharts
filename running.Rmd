@@ -1,0 +1,82 @@
+---
+title: "Running"
+author: "Jacob Duvall"
+date: "January 16, 2019"
+output: 
+    html_document:
+      toc: yes
+      toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Men's Marathon
+
+```{r}
+library(lubridate)
+library(plyr)
+
+mMarathon = read.csv("MARATHON.csv")
+mMarathon
+
+mMarathon$DATE = mdy(mMarathon$DATE)
+dq = mMarathon[order(mMarathon$DATE,decreasing =T ),]
+```
+
+```{r}
+library(ggplot2)
+marathon = ggplot(data = mMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "steelblue") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Men's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME")
+
+marathon
+```
+
+Nationality Statistics
+```{r}
+x = barplot(table(mMarathon$COUNTRY), xaxt="n",col="steelblue",main="Number of Marathon Records Per Country")
+labs = paste(names(table(mMarathon$COUNTRY)), "")
+text(cex=.9, x=x-0, y=-1.5, labs, xpd=TRUE, srt=90)
+
+pie(with(mMarathon,table(COUNTRY)),col=1:14,main = "Number of Marathon Records Per Country")
+```
+
+```{r}
+
+```
+
+# Women's Marathon
+
+```{r}
+wMarathon = read.csv("WMARATHON.csv")
+wMarathon
+
+wMarathon$DATE = mdy(wMarathon$DATE)
+dq = mMarathon[order(wMarathon$DATE,decreasing =T ),]
+```
+
+```{r}
+wmarathon = ggplot(data = wMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Women's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME")
+
+wmarathon
+```
+
+Nationality Statistics
+```{r}
+x = barplot(table(wMarathon$COUNTRY), xaxt="n",col="deeppink2",main="Number of Marathon Records Per Country")
+labs = paste(names(table(wMarathon$COUNTRY)), "")
+text(cex=.9, x=x-0, y=-1.5, labs, xpd=TRUE, srt=90)
+
+pie(with(wMarathon,table(COUNTRY)),col=1:14,main = "Number of Marathon Records Per Country")
+```
+
+ # Gender Combined Statistics
+```{r}
+
+```
+ 
+ 
