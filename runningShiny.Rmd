@@ -46,12 +46,17 @@ library(shiny) #shinyApp
 marathon.df = read.csv("bothMarathon.csv")
 marathon.df1 = marathon.df
 marathon = subset(marathon.df, GENDER == 'Male')
+marathon.df2 = marathon
 wmarathon = subset(marathon.df, GENDER == 'Female')
+wmarathon.df = wmarathon
 
 #data import men's half marathon and women's half marathon
 halfMarathon.df = read.csv("halfMarathon.csv")
+halfMarathon.df1 = halfMarathon.df
 halfMarathon = subset(halfMarathon.df, GENDER == 'MALE')
+halfMarathon.df2 = halfMarathon
 whalfMarathon = subset(halfMarathon.df, GENDER == 'FEMALE')
+whalfMarathon.df = whalfMarathon
 
 #set marathon dates in decreasing order
 marathon$DATE = mdy(marathon$DATE)
@@ -95,7 +100,6 @@ x = paste(halfMarathon.df$TIME)
 x = as.POSIXct(strptime(x, "%H:%M:%S"))
 halfMarathon.df$TIME = x 
 
-marathon
 # Input options
 inputPanel(
   selectInput("plotg", "Choose Race Option:",
@@ -155,30 +159,35 @@ bothhalfmarathon = ggplot(data = halfMarathon.df, aes(x=DATE, y =TIME,col=GENDER
  if(input$plotg == "Half Marathon" & input$rd1 == "Both") print(bothhalfmarathon)
 })
 
-  shinyApp(
-    
-       ui = fluidPage(
-          fluidRow(
-           column(12,
-             dataTableOutput('table')
-           )
-         )
-       ),
-      server = function(input, output) {
-                 output$table <- renderDataTable({
-           {
-               if(!is.null(input$rd2 == 100)) {
-                   marathon.df1
-               }
-             else {
-               NULL
-             }
-           }})
-         }
-       )
+# Mens's Marathon table
+renderDataTable({
+ if(input$plotg == "Marathon" & input$rd1 == "Male" & input$table == TRUE) marathon.df2
+  })
 
+# Women's Marathon table
+renderDataTable({
+ if(input$plotg == "Marathon" & input$rd1 == "Female" & input$table == TRUE) wmarathon.df
+  })
 
+# Men's and Women's Marathon table
+renderDataTable({
+ if(input$plotg == "Marathon" & input$rd1 == "Both" & input$table == TRUE) marathon.df1
+  })
+
+# Mens's Half Marathon table
+renderDataTable({
+ if(input$plotg == "Half Marathon" & input$rd1 == "Male" & input$table == TRUE) halfMarathon.df2
+  })
+
+# Women's Half Marathon table
+renderDataTable({
+ if(input$plotg == "Half Marathon" & input$rd1 == "Female" & input$table == TRUE) whalfMarathon.df
+  })
+
+# Men's and Women's Half Marathon table
+renderDataTable({
+ if(input$plotg == "Half Marathon" & input$rd1 == "Both" & input$table == TRUE) halfMarathon.df1
+  })
 
 ```
-#bugs - y axis is 1 unit each entry
 
