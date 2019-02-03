@@ -6,9 +6,9 @@ output: html_document
 runtime: shiny
 ---
 
-<style type="text/css">
+<style type="text/css"> 
 
-h1.title {
+h1.title { 
   font-size: 38px;
   color: DarkRed;
   text-align: center;
@@ -35,15 +35,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This application uses publicly available data to showcase running analytics over some popular distances.
 ```{r eruptions, echo=FALSE}
-library(ggplot2)
-library(lubridate)
+library(ggplot2) #the graphs
+library(lubridate) #mdy
+library(reshape2) #melt
+library(shiny) #shinyApp
 # library(plyr)
 # library(gridExtra)
 
 #data import men's marathon and women's marathon
-marathon.df = read.csv("Marathon.csv")
+marathon.df = read.csv("bothMarathon.csv")
 marathon.df1 = marathon.df
-wmarathon.df = read.csv("WMARATHON.csv")
+marathon = subset(marathon.df, GENDER == 'Male')
+wmarathon = subset(marathon.df, GENDER == 'Female')
 
 #data import men's half marathon and women's half marathon
 halfMarathon.df = read.csv("halfMarathon.csv")
@@ -51,25 +54,33 @@ halfMarathon = subset(halfMarathon.df, GENDER == 'MALE')
 whalfMarathon = subset(halfMarathon.df, GENDER == 'FEMALE')
 
 #set marathon dates in decreasing order
+marathon$DATE = mdy(marathon$DATE)
+dq = marathon[order(marathon$DATE,decreasing =T ),]
+wmarathon$DATE = mdy(wmarathon$DATE)
+dq = wmarathon[order(wmarathon$DATE,decreasing=T),]
 marathon.df$DATE = mdy(marathon.df$DATE)
 dq = marathon.df[order(marathon.df$DATE,decreasing =T ),]
-wmarathon.df$DATE = mdy(wmarathon.df$DATE)
-dq = wmarathon.df[order(wmarathon.df$DATE,decreasing=T),]
 
 #set half marathon dates in decreasing order
 halfMarathon$DATE = mdy(halfMarathon$DATE)
 dq = halfMarathon[order(halfMarathon$DATE,decreasing =T ),]
 whalfMarathon$DATE = mdy(whalfMarathon$DATE)
 dq = whalfMarathon[order(whalfMarathon$DATE,decreasing=T),]
+halfMarathon.df$DATE = mdy(halfMarathon.df$DATE)
+dq = halfMarathon.df[order(halfMarathon.df$DATE,decreasing =T ),]
 
 #convert marathon string times into numerics 
+x = paste(marathon$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+marathon$TIME = x 
+ 
+x = paste(wmarathon$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+wmarathon$TIME = x 
+ 
 x = paste(marathon.df$TIME)
 x = as.POSIXct(strptime(x, "%H:%M:%S"))
 marathon.df$TIME = x 
-
-x = paste(wmarathon.df$TIME)
-x = as.POSIXct(strptime(x, "%H:%M:%S"))
-wmarathon.df$TIME = x 
 
 #convert half marathon string times into numerics 
 x = paste(halfMarathon$TIME)
@@ -80,43 +91,68 @@ x = paste(whalfMarathon$TIME)
 x = as.POSIXct(strptime(x, "%H:%M:%S"))
 whalfMarathon$TIME = x 
 
-# INPUTS
+x = paste(halfMarathon.df$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+halfMarathon.df$TIME = x 
 
+marathon
+# Input options
 inputPanel(
   selectInput("plotg", "Choose Race Option:",
       list(`options` = c("Marathon", "Half Marathon")
       )
     ),
-  checkboxGroupInput("rd1", label = "Select Gender:",
-                   choices = list("Men" = 100,"Women" = 200),
-                   selected = 100),
+  selectInput("rd1", "Select Gender:",
+              list(`options` = c("Male", "Female", "Both")
+              )
+              ),
   checkboxInput("table", label = "Show Table", value = TRUE))
 
+# plot renderings 
 renderPlot({
   
-marathon = ggplot(data = marathon.df, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "steelblue") + geom_point() +
+# ---------------------  MARATHON PLOTS ---------------------
+# men's marathon plot  
+marathonGraph = ggplot(data = marathon, aes(x = DATE, y = TIME)) +  geom_line(color = "steelblue") + geom_point() +
   theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
-  labs(title="Men's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
+  labs(title="Men's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
 
-wmarathon = ggplot(data = wmarathon.df, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
+# women's marathon plot
+wmarathonGraph = ggplot(data = wmarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
   theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
   labs(title="Women's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME")
 
+# both men's and women's marathon plot
+bothmarathonGraph = ggplot(data = marathon.df, aes(x=DATE, y =TIME,col=GENDER)) + geom_line() + geom_point() + theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Men's and Women's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
+
+# --------------------- HALF MARATHON PLOTS ---------------------
+
+# men's half marathon plot
 halfmarathonGraph = ggplot(data = halfMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "steelblue") + geom_point() +
   theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
   labs(title="Men's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
 
+# women's half marathon plot
 whalfmarathonGraph = ggplot(data = whalfMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
   theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
   labs(title="Womens's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
 
+# both men's and women's half marathon plot
+bothhalfmarathon = ggplot(data = halfMarathon.df, aes(x=DATE, y =TIME,col=GENDER)) + geom_line() + geom_point() + theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Men's and Women's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
 
 
- if(input$plotg == "Marathon" & input$rd1 == 100) print(marathon) 
- if(input$plotg == "Marathon" & input$rd1 == 200) print(wmarathon)
+# men's and women's marathon prints
+ if(input$plotg == "Marathon" & input$rd1 == "Male") print(marathonGraph) 
+ if(input$plotg == "Marathon" & input$rd1 == "Female") print(wmarathonGraph)
+ if(input$plotg == "Marathon" & input$rd1 == "Both") print(bothmarathonGraph)
 
- if(input$plotg == "Half Marathon" & input$rd1 == 100) print(halfmarathonGraph) 
- if(input$plotg == "Half Marathon" & input$rd1 == 200) print(whalfmarathonGraph)
+
+#men's and women's half marathon prints
+ if(input$plotg == "Half Marathon" & input$rd1 == "Male") print(halfmarathonGraph) 
+ if(input$plotg == "Half Marathon" & input$rd1 == "Female") print(whalfmarathonGraph)
+ if(input$plotg == "Half Marathon" & input$rd1 == "Both") print(bothhalfmarathon)
 })
 
   shinyApp(
