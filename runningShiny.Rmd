@@ -1,0 +1,148 @@
+---
+title: "Running Analytics"
+author: "Jacob Duvall"
+date: "Originally published February 1, 2019"
+output: html_document
+runtime: shiny
+---
+
+<style type="text/css">
+
+h1.title {
+  font-size: 38px;
+  color: DarkRed;
+  text-align: center;
+}
+h4.author { /* Header 4 - and the author and data headers use this too  */
+    font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkRed;
+  text-align: center;
+}
+h4.date { /* Header 4 - and the author and data headers use this too  */
+  font-size: 18px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+  text-align: center;
+}
+</style>
+
+# https://community.rstudio.com/t/embed-a-shiny-app-in-a-private-website/19163/4
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This application uses publicly available data to showcase running analytics over some popular distances.
+```{r eruptions, echo=FALSE}
+library(ggplot2)
+library(lubridate)
+# library(plyr)
+# library(gridExtra)
+
+#data import men's marathon and women's marathon
+marathon.df = read.csv("Marathon.csv")
+marathon.df1 = marathon.df
+wmarathon.df = read.csv("WMARATHON.csv")
+
+#data import men's half marathon and women's half marathon
+halfMarathon.df = read.csv("halfMarathon.csv")
+halfMarathon = subset(halfMarathon.df, GENDER == 'MALE')
+whalfMarathon = subset(halfMarathon.df, GENDER == 'FEMALE')
+
+#set marathon dates in decreasing order
+marathon.df$DATE = mdy(marathon.df$DATE)
+dq = marathon.df[order(marathon.df$DATE,decreasing =T ),]
+wmarathon.df$DATE = mdy(wmarathon.df$DATE)
+dq = wmarathon.df[order(wmarathon.df$DATE,decreasing=T),]
+
+#set half marathon dates in decreasing order
+halfMarathon$DATE = mdy(halfMarathon$DATE)
+dq = halfMarathon[order(halfMarathon$DATE,decreasing =T ),]
+whalfMarathon$DATE = mdy(whalfMarathon$DATE)
+dq = whalfMarathon[order(whalfMarathon$DATE,decreasing=T),]
+
+#convert marathon string times into numerics 
+x = paste(marathon.df$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+marathon.df$TIME = x 
+
+x = paste(wmarathon.df$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+wmarathon.df$TIME = x 
+
+#convert half marathon string times into numerics 
+x = paste(halfMarathon$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+halfMarathon$TIME = x 
+
+x = paste(whalfMarathon$TIME)
+x = as.POSIXct(strptime(x, "%H:%M:%S"))
+whalfMarathon$TIME = x 
+
+# INPUTS
+
+inputPanel(
+  selectInput("plotg", "Choose Race Option:",
+      list(`options` = c("Marathon", "Half Marathon")
+      )
+    ),
+  checkboxGroupInput("rd1", label = "Select Gender:",
+                   choices = list("Men" = 100,"Women" = 200),
+                   selected = 100),
+  checkboxInput("table", label = "Show Table", value = TRUE))
+
+renderPlot({
+  
+marathon = ggplot(data = marathon.df, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "steelblue") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Men's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
+
+wmarathon = ggplot(data = wmarathon.df, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Women's Marathon Record Over Time", x= "DATE", y ="FINISHING TIME")
+
+halfmarathonGraph = ggplot(data = halfMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "steelblue") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Men's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
+
+whalfmarathonGraph = ggplot(data = whalfMarathon, aes(x = DATE, y = TIME, group = 1)) +  geom_line(color = "deeppink") + geom_point() +
+  theme(axis.text.x = element_text(angle=70, vjust=0.6))  +
+  labs(title="Womens's Half Marathon Record Over Time", x= "DATE", y ="FINISHING TIME") 
+
+
+
+ if(input$plotg == "Marathon" & input$rd1 == 100) print(marathon) 
+ if(input$plotg == "Marathon" & input$rd1 == 200) print(wmarathon)
+
+ if(input$plotg == "Half Marathon" & input$rd1 == 100) print(halfmarathonGraph) 
+ if(input$plotg == "Half Marathon" & input$rd1 == 200) print(whalfmarathonGraph)
+})
+
+  shinyApp(
+    
+       ui = fluidPage(
+          fluidRow(
+           column(12,
+             dataTableOutput('table')
+           )
+         )
+       ),
+      server = function(input, output) {
+                 output$table <- renderDataTable({
+           {
+               if(!is.null(input$rd2 == 100)) {
+                   marathon.df1
+               }
+             else {
+               NULL
+             }
+           }})
+         }
+       )
+
+
+
+```
+#bugs - y axis is 1 unit each entry
+
